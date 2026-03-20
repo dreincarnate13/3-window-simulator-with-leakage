@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Window Edge Cost Simulator (With Leakage)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type=range] {
+            height: 6px;
+            -webkit-appearance: none;
+            width: 100%;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">3-Window Simulator w/ Leakage</h1>
+                <p class="text-slate-500 mt-1">Interactive proof of Predictive Charge Bounding with realistic Battery Leakage ($h_l$).</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex flex-wrap gap-4 text-sm font-medium text-slate-600 bg-slate-100 px-4 py-2 rounded-lg">
+                <div><span class="text-slate-400">Battery Cap:</span> 120</div>
+                <div><span class="text-slate-400">Threshold:</span> 80</div>
+                <div><span class="text-slate-400">Tier 1:</span> $5</div>
+                <div><span class="text-slate-400">Tier 2:</span> $8</div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar: Controls -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+                <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Environment Config
+                </h2>
+
+                <!-- System Constants Controls -->
+                <div class="mb-8 pb-6 border-b border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">System Constants</h3>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Battery Cap</label>
+                            <span id="bmax-val" class="font-bold text-indigo-600">120</span>
+                        </div>
+                        <input type="range" id="bmax" min="0" max="300" step="10" value="120" class="accent-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Threshold</label>
+                            <span id="thresh-val" class="font-bold text-indigo-600">80</span>
+                        </div>
+                        <input type="range" id="thresh" min="0" max="250" step="10" value="80" class="accent-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Tier 1 Cost ($)</label>
+                            <span id="t1-val" class="font-bold text-indigo-600">5</span>
+                        </div>
+                        <input type="range" id="t1" min="1" max="20" step="1" value="5" class="accent-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Tier 2 Cost ($)</label>
+                            <span id="t2-val" class="font-bold text-indigo-600">8</span>
+                        </div>
+                        <input type="range" id="t2" min="1" max="30" step="1" value="8" class="accent-indigo-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Retention Factor (hl)</label>
+                            <span id="hl-val" class="font-bold text-indigo-600">1.00</span>
+                        </div>
+                        <input type="range" id="hl" min="0.5" max="1.0" step="0.05" value="1.0" class="accent-indigo-500">
+                    </div>
+                </div>
+                
+                <!-- H1 Controls -->
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Window 1 (H1)</h3>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Demand</label>
+                            <span id="d0-val" class="font-bold text-rose-500">30</span>
+                        </div>
+                        <input type="range" id="d0" min="0" max="250" step="10" value="30" class="accent-rose-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Solar</label>
+                            <span id="s0-val" class="font-bold text-amber-500">10</span>
+                        </div>
+                        <input type="range" id="s0" min="0" max="250" step="10" value="10" class="accent-amber-500">
+                    </div>
+                </div>
+
+                <!-- H2 Controls -->
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Window 2 (H2)</h3>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Demand</label>
+                            <span id="d1-val" class="font-bold text-rose-500">10</span>
+                        </div>
+                        <input type="range" id="d1" min="0" max="250" step="10" value="10" class="accent-rose-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Solar</label>
+                            <span id="s1-val" class="font-bold text-amber-500">100</span>
+                        </div>
+                        <input type="range" id="s1" min="0" max="250" step="10" value="100" class="accent-amber-500">
+                    </div>
+                </div>
+
+                <!-- H3 Controls -->
+                <div>
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Window 3 (H3)</h3>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Demand</label>
+                            <span id="d2-val" class="font-bold text-rose-500">200</span>
+                        </div>
+                        <input type="range" id="d2" min="0" max="250" step="10" value="200" class="accent-rose-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-medium text-slate-600">Solar</label>
+                            <span id="s2-val" class="font-bold text-amber-500">0</span>
+                        </div>
+                        <input type="range" id="s2" min="0" max="250" step="10" value="0" class="accent-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+                
+                <!-- Results Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div id="card-sf" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 transition-all">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Solar First (Naive)</h3>
+                        <p class="text-3xl font-bold text-slate-800" id="cost-sf">$0</p>
+                    </div>
+                    <div id="card-gf" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 transition-all">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Grid First (Blind Buffering)</h3>
+                        <p class="text-3xl font-bold text-slate-800" id="cost-gf">$0</p>
+                    </div>
+                    <div id="card-prop" class="bg-indigo-50 p-6 rounded-2xl shadow-sm border-2 border-indigo-200 transition-all relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center opacity-50">
+                            <svg class="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-1">Proposed (Adaptive)</h3>
+                        <p class="text-4xl font-extrabold text-indigo-600" id="cost-prop">$0</p>
+                        <p id="prop-mode" class="text-xs font-semibold text-indigo-400 mt-2 bg-indigo-100/50 inline-block px-2 py-1 rounded">Mode: ---</p>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h2 class="text-lg font-bold text-slate-800">Window-by-Window Breakdown</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4 font-semibold">Paradigm</th>
+                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H1 Draw</th>
+                                    <th class="px-6 py-4 font-semibold text-center">H1 Batt</th>
+                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H1 Cost</th>
+                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H2 Draw</th>
+                                    <th class="px-6 py-4 font-semibold text-center">H2 Batt</th>
+                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H2 Cost</th>
+                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H3 Draw</th>
+                                    <th class="px-6 py-4 font-semibold text-center">H3 Batt</th>
+                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H3 Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700" id="table-body">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System Constants variables (dynamically updated)
+        let BMAX = 120;
+        let THRESH = 80;
+        let T1 = 5;
+        let T2 = 8;
+        let HL = 1.0;
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        }
+
+        function getCost(draw) {
+            return draw <= THRESH ? draw * T1 : draw * T2;
+        }
+
+        // Core Evaluator with Leakage factor (HL) applied
+        function eval_plan(demands, solars, draw_logic) {
+            let b = 0, cost = 0;
+            let draws = [], batts = [], costs = [];
+            for(let i=0; i<3; i++) {
+                let draw = draw_logic(i, b, demands, solars);
+                let c = getCost(draw);
+                
+                // Advance real battery state applying leakage first
+                let available_b = b * HL;
+                b = Math.min(BMAX, Math.max(0, available_b + solars[i] + draw - demands[i]));
+                
+                draws.push(draw);
+                batts.push(b);
+                costs.push(c);
+                cost += c;
+            }
+            return { draws, batts, costs, total: cost };
+        }
+
+        function simulate() {
+            // Get System Constants
+            BMAX = parseInt(document.getElementById('bmax').value);
+            THRESH = parseInt(document.getElementById('thresh').value);
+            T1 = parseInt(document.getElementById('t1').value);
+            T2 = parseInt(document.getElementById('t2').value);
+            HL = parseFloat(document.getElementById('hl').value);
+            
+            // Update System Constant UI Labels
+            document.getElementById('bmax-val').innerText = BMAX;
+            document.getElementById('thresh-val').innerText = THRESH;
+            document.getElementById('t1-val').innerText = T1;
+            document.getElementById('t2-val').innerText = T2;
+            document.getElementById('hl-val').innerText = HL.toFixed(2);
+
+            // Get inputs
+            const d = [
+                parseInt(document.getElementById('d0').value),
+                parseInt(document.getElementById('d1').value),
+                parseInt(document.getElementById('d2').value)
+            ];
+            const s = [
+                parseInt(document.getElementById('s0').value),
+                parseInt(document.getElementById('s1').value),
+                parseInt(document.getElementById('s2').value)
+            ];
+
+            // Update UI Labels
+            for(let i=0; i<3; i++) {
+                document.getElementById(`d${i}-val`).innerText = d[i];
+                document.getElementById(`s${i}-val`).innerText = s[i];
+            }
+
+            // --- 1. Solar First Logic ---
+            const sf_logic = (i, b, d_arr, s_arr) => {
+                let available_b = b * HL;
+                return Math.max(0, d_arr[i] - s_arr[i] - available_b);
+            };
+            const sf = eval_plan(d, s, sf_logic);
+
+            // --- 2. Grid First (Blind Buffering) ---
+            // Always buys up to THRESH if there is physical battery space, regardless of future need.
+            const gf_logic = (i, b, d_arr, s_arr) => {
+                let available_b = b * HL;
+                let needed = Math.max(0, d_arr[i] - s_arr[i] - available_b);
+                let space = BMAX - Math.max(0, available_b + s_arr[i] - d_arr[i]);
+                let buy_extra = Math.min(THRESH - needed, space);
+                if (buy_extra < 0) buy_extra = 0;
+                return needed + buy_extra;
+            };
+            const gf = eval_plan(d, s, gf_logic);
+
+            // --- 3. Proposed (Adaptive Mode & Predictive Bounding) ---
+            const prop_logic = (i, b, d_arr, s_arr) => {
+                let available_b = b * HL;
+                let needed = Math.max(0, d_arr[i] - s_arr[i] - available_b);
+                
+                // 1. Calculate future net deficit to justify pre-charging (considering leakage cascade)
+                let future_net = 0;
+                let temp_b = Math.min(BMAX, Math.max(0, available_b + s_arr[i] - d_arr[i]));
+                for(let j=i+1; j<3; j++) {
+                    let avail_temp = temp_b * HL;
+                    let fn = Math.max(0, d_arr[j] - s_arr[j] - avail_temp);
+                    future_net += fn;
+                    temp_b = Math.min(BMAX, Math.max(0, avail_temp + s_arr[j] + fn - d_arr[j]));
+                }
+                
+                // 2. Prevent Solar Displacement: Find max extra charge that won't overflow future solar
+                let max_storable = 0;
+                let base_b = Math.min(BMAX, Math.max(0, available_b + s_arr[i] - d_arr[i]));
+                let max_test_x = Math.floor(BMAX - base_b);
+                for (let x = max_test_x; x >= 0; x--) {
+                    let ok = true;
+                    let test_b = base_b + x;
+                    for (let j = i + 1; j < 3 && ok; j++) {
+                        let avail_test = test_b * HL;
+                        test_b = avail_test + s_arr[j] - d_arr[j];
+                        if (test_b > BMAX) ok = false; // Displaces free solar!
+                        if (test_b < 0) test_b = 0;
+                    }
+                    if (ok) {
+                        max_storable = x;
+                        break;
+                    }
+                }
+                
+                // Bound the grid purchase strictly by the lowest mathematical constraint
+                let buy_extra = Math.min(THRESH - needed, max_storable, future_net);
+                if (buy_extra < 0) buy_extra = 0;
+                
+                return needed + buy_extra;
+            };
+            const prop = eval_plan(d, s, prop_logic);
+            
+            let mode = "Predictive Charge Bounding";
+            // Allow small float tolerance for equality comparison
+            if (Math.abs(prop.total - sf.total) < 0.01 && prop.total < gf.total) mode = "SolarFirst Mode Selected";
+            if (Math.abs(prop.total - gf.total) < 0.01 && prop.total < sf.total) mode = "GridFirst Mode Selected";
+
+            // --- Update UI ---
+            document.getElementById('cost-sf').innerText = formatCurrency(sf.total);
+            document.getElementById('cost-gf').innerText = formatCurrency(gf.total);
+            document.getElementById('cost-prop').innerText = formatCurrency(prop.total);
+            document.getElementById('prop-mode').innerText = mode;
+
+            // Highlight best card visually
+            let min_cost = Math.min(sf.total, gf.total, prop.total);
+            ['sf', 'gf', 'prop'].forEach(alg => {
+                let card = document.getElementById(`card-${alg}`);
+                let isWinner = Math.abs(eval(alg).total - min_cost) < 0.01;
+                if(alg !== 'prop') {
+                    card.className = `p-6 rounded-2xl shadow-sm border transition-all ${isWinner ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`;
+                }
+            });
+
+            // Build Table Rows
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            const rows = [
+                { name: 'Solar First (Naive)', data: sf },
+                { name: 'Grid First (Blind Buffering)', data: gf },
+                { name: 'Proposed (Adaptive)', data: prop, isProp: true }
+            ];
+
+            rows.forEach(r => {
+                let tr = document.createElement('tr');
+                if(r.isProp) tr.className = "bg-indigo-50/30 font-medium";
+                
+                let html = `<td class="px-6 py-4 border-b border-slate-100 ${r.isProp ? 'text-indigo-700 font-bold' : ''}">${r.name}</td>`;
+                
+                for(let i=0; i<3; i++) {
+                    let drawClass = r.data.draws[i] > THRESH ? "text-rose-600 font-bold" : "";
+                    html += `
+                        <td class="px-6 py-4 text-center border-l border-slate-200 border-b ${drawClass}">${r.data.draws[i].toFixed(1)} u</td>
+                        <td class="px-6 py-4 text-center border-b text-slate-500">${r.data.batts[i].toFixed(1)} u</td>
+                        <td class="px-6 py-4 text-center border-b bg-slate-50/50 ${drawClass}">${formatCurrency(r.data.costs[i])}</td>
+                    `;
+                }
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Event Listeners
+        ['d0','s0','d1','s1','d2','s2', 'bmax', 'thresh', 't1', 't2', 'hl'].forEach(id => {
+            document.getElementById(id).addEventListener('input', simulate);
+        });
+
+        // Init
+        simulate();
+    </script>
+</body>
+</html>
