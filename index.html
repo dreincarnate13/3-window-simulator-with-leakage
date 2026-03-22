@@ -27,7 +27,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-[1600px] mx-auto">
         <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900 tracking-tight">3-Window Simulator w/ Leakage</h1>
@@ -173,16 +173,16 @@
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
                                 <tr>
-                                    <th class="px-6 py-4 font-semibold">Paradigm</th>
-                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H1 Draw</th>
-                                    <th class="px-6 py-4 font-semibold text-center">H1 Batt</th>
-                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H1 Cost</th>
-                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H2 Draw</th>
-                                    <th class="px-6 py-4 font-semibold text-center">H2 Batt</th>
-                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H2 Cost</th>
-                                    <th class="px-6 py-4 font-semibold text-center border-l border-slate-200">H3 Draw</th>
-                                    <th class="px-6 py-4 font-semibold text-center">H3 Batt</th>
-                                    <th class="px-6 py-4 font-semibold text-center bg-slate-100">H3 Cost</th>
+                                    <th class="px-4 py-3 font-semibold">Paradigm</th>
+                                    <th class="px-4 py-3 font-semibold text-center border-l border-slate-200">H1 Draw</th>
+                                    <th class="px-4 py-3 font-semibold text-center">H1 Batt</th>
+                                    <th class="px-4 py-3 font-semibold text-center bg-slate-100">H1 Cost</th>
+                                    <th class="px-4 py-3 font-semibold text-center border-l border-slate-200">H2 Draw</th>
+                                    <th class="px-4 py-3 font-semibold text-center">H2 Batt</th>
+                                    <th class="px-4 py-3 font-semibold text-center bg-slate-100">H2 Cost</th>
+                                    <th class="px-4 py-3 font-semibold text-center border-l border-slate-200">H3 Draw</th>
+                                    <th class="px-4 py-3 font-semibold text-center">H3 Batt</th>
+                                    <th class="px-4 py-3 font-semibold text-center bg-slate-100">H3 Cost</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700" id="table-body">
@@ -361,14 +361,14 @@
                 let tr = document.createElement('tr');
                 if(r.isProp) tr.className = "bg-indigo-50/30 font-medium";
                 
-                let html = `<td class="px-6 py-4 border-b border-slate-100 ${r.isProp ? 'text-indigo-700 font-bold' : ''}">${r.name}</td>`;
+                let html = `<td class="px-4 py-3 border-b border-slate-100 ${r.isProp ? 'text-indigo-700 font-bold' : ''}">${r.name}</td>`;
                 
                 for(let i=0; i<3; i++) {
                     let drawClass = r.data.draws[i] > THRESH ? "text-rose-600 font-bold" : "";
                     html += `
-                        <td class="px-6 py-4 text-center border-l border-slate-200 border-b ${drawClass}">${r.data.draws[i].toFixed(1)} u</td>
-                        <td class="px-6 py-4 text-center border-b text-slate-500">${r.data.batts[i].toFixed(1)} u</td>
-                        <td class="px-6 py-4 text-center border-b bg-slate-50/50 ${drawClass}">${formatCurrency(r.data.costs[i])}</td>
+                        <td class="px-4 py-3 text-center border-l border-slate-200 border-b ${drawClass}">${r.data.draws[i].toFixed(1)} u</td>
+                        <td class="px-4 py-3 text-center border-b text-slate-500">${r.data.batts[i].toFixed(1)} u</td>
+                        <td class="px-4 py-3 text-center border-b bg-slate-50/50 ${drawClass}">${formatCurrency(r.data.costs[i])}</td>
                     `;
                 }
                 tr.innerHTML = html;
